@@ -1,0 +1,633 @@
+#include <bits/stdc++.h>
+#include <iostream>
+#include <winbgim.h>
+#include <stdlib.h>
+
+using namespace std;
+#define MAX 20
+#define FUNDAL DARKGRAY
+#define MIN_moves 4
+#define LIMITARE_miscari 100
+
+char* coloane = "A          B          C          D          E          F          G          H";
+int M[10][10],jucator,Copie_jucator,Pi,Pj,Pci,Pcj,movesCount[3],scoreCount[3],pieseCount[3];
+char sirScor1[10],sirScor2[10];
+int matSuport[11][11];
+int culoare[3]={FUNDAL,RED,BLACK};
+
+int stanga,sus,width,height,latura, numar;
+char player[3][256];
+struct
+{
+    int ii,jj;
+
+}v[5];
+
+void drawTextLines()
+{
+    outtextxy(180,115,"8");
+    outtextxy(180,165,"7");
+    outtextxy(180,215,"6");
+    outtextxy(180,265,"5");
+    outtextxy(180,315,"4");
+    outtextxy(180,365,"3");
+    outtextxy(180,415,"2");
+    outtextxy(180,465,"1");
+}
+void desen()
+{
+   int i,j; numar=8;
+   width=400; height=400; latura=width/numar;
+   sus=(getmaxy()-width)/2; stanga=(getmaxx()-height)/2;
+   setbkcolor(FUNDAL); clearviewport(); setcolor(BLUE);
+   for (i=1; i<=numar; i++)
+       for (j=1; j<=numar; j++)
+           rectangle(stanga+latura*(i-1),sus+latura*(j-1),stanga+latura*i,sus+latura*j);
+    outtextxy(220,80,coloane);
+    rectangle(645,440,750,475);
+    outtextxy(680,450,"BACK");
+    drawTextLines();
+
+}
+void desenMenu()
+{
+    setbkcolor(FUNDAL); clearviewport();
+    setcolor(RED);
+    settextstyle(8,0,6);
+    rectangle(100,75,800,175);
+    outtextxy(185,100,"PLAYER VS PLAYER");
+    rectangle(100,225,800,325);
+    outtextxy(170,250,"PLAYER VS COMPUTER");
+    rectangle(100,375,800,475);
+    outtextxy(160,400,"PLAYER VS COMPUTER*");
+}
+void incercuirePiesa(int linia, int coloana, int culoare)
+{
+    int x1, y1, x2, y2;
+    int xmijloc, ymijloc;
+    // stergere
+    setcolor(FUNDAL); setfillstyle(SOLID_FILL,FUNDAL);
+    x1=stanga+latura*(coloana-1); y1=sus+latura*(linia-1);
+    x2=x1+latura; y2=y1+latura;
+    xmijloc=(x1+x2)/2; ymijloc=(y1+y2)/2;
+    bar(xmijloc-20,ymijloc-20,xmijloc+20,ymijloc+20);
+    // afisez cerc rosu aprins
+    setcolor(culoare); setfillstyle(SOLID_FILL,culoare);
+    fillellipse(xmijloc,ymijloc,18,18);
+    setcolor(YELLOW);
+    fillellipse(xmijloc,ymijloc,15,15);
+
+}
+void deseneazaPiesa(int linia, int coloana, int culoare)
+{
+    int x1, y1, x2, y2;
+    int xmijloc, ymijloc;
+    // stergere
+    setcolor(FUNDAL); setfillstyle(SOLID_FILL,FUNDAL);
+    x1=stanga+latura*(coloana-1); y1=sus+latura*(linia-1);
+    x2=x1+latura; y2=y1+latura;
+    xmijloc=(x1+x2)/2; ymijloc=(y1+y2)/2;
+    bar(xmijloc-20,ymijloc-20,xmijloc+20,ymijloc+20);
+    // afisez cerc rosu aprins
+    setcolor(culoare); setfillstyle(SOLID_FILL,culoare);
+    fillellipse(xmijloc,ymijloc,18,18);
+
+}
+void select_position(int &P1, int &P2, int &cordX, int &cordY)
+{   int x,y;
+    int click=false;
+    do
+        if(ismouseclick(WM_LBUTTONDOWN) && !click)
+        {
+            click=true;
+            clearmouseclick(WM_LBUTTONDOWN);
+            x=mousex(); y=mousey();
+            cordX = x; cordY = y;
+            P1=(y-sus)/latura+1; P2=(x-stanga)/latura+1;
+        }
+    while (!click);
+
+
+}
+
+bool ocupat(int Pi, int Pj)
+{
+    if(M[Pi+1][Pj+1]!=0 && M[Pi-1][Pj+1]!=0 && M[Pi+1][Pj-1]!=0 && M[Pi-1][Pj-1]!=0)
+        return 1;
+
+    return 0;
+
+}
+
+void afisare_matr(int M[10][10])
+{
+    for(int i=1;i<=8;i++)
+        {for(int j=1;j<=8;j++)
+        {if(M[i][j]==1) deseneazaPiesa(i,j, culoare[1]);//cout<<player[1][0]<<" ";
+        else if (M[i][j]==2) deseneazaPiesa(i,j, culoare[2]); //cout<<player[2][0]<<" ";
+        //else cout<<M[i][j]<<" ";
+        }
+    //cout<<endl;
+    }
+}
+
+void initializare_matr(int M[10][10])
+{
+    for(int i=1;i<=8;i++)
+        for(int j=1;j<=8;j++)
+            M[i][j]=0;
+
+    M[8][1]=M[7][2]=M[8][3]=M[7][4]=M[8][5]=M[7][6]=M[8][7]=M[7][8]=1;//primul jucator
+    M[2][1]=M[1][2]=M[2][3]=M[1][4]=M[2][5]=M[1][6]=M[2][7]=M[1][8]=2;//al doilea jucator
+
+    for(int i=0;i<=9;i++)
+        for(int j=0;j<=9;j++)
+            if(i==0 || i==9 || j==0 || j==9)
+                M[i][j]=9;
+
+}
+void initAuxMatrix(int matSuport[][11])
+{
+    for(int i = 0; i < 10; i++){
+        for(int j = 0; j < 10; j++){
+                if(i == 0 || j == 0 || i == 9 || j == 9){
+                    matSuport[i][j] = 5;
+                }
+                else{
+                    matSuport[i][j] = 0;
+                }
+        }
+    }
+}
+
+void build_matr(int &player,int Pi, int Pj,int Pci, int Pcj)
+{   movesCount[player]++;
+    if(player==1)
+        M[Pci][Pcj]=1,player=2;
+    else if(player==2)
+        M[Pci][Pcj]=2,player=1;
+
+
+    M[Pi][Pj]=0;
+
+
+}
+int potentialPositions(int matrix[][11], int Pi, int Pj)
+{
+    int counter = 0;
+    if(matrix[Pi-1][Pj-1] == 0){
+        counter += 1;
+    }
+    if(matrix[Pi-1][Pj+1] == 0){
+        counter += 1;
+    }
+    if(matrix[Pi+1][Pj-1] == 0){
+        counter += 1;
+    }
+    if(matrix[Pi+1][Pj+1] == 0){
+        counter += 1;
+    }
+    return counter;
+}
+int occupiedPositions2(int matrix[][10], int Pi, int Pj)
+{
+    int counter = 0;
+
+        if(matrix[Pi-1][Pj-1] ==1 || matrix[Pi-1][Pj-1] ==2 || matrix[Pi-1][Pj-1] ==9){
+            counter += 1;
+        }
+        if(matrix[Pi-1][Pj+1] ==1 || matrix[Pi-1][Pj+1] ==2 || matrix[Pi-1][Pj+1] ==9){
+            counter += 1;
+        }
+        if(matrix[Pi+1][Pj-1] ==1 || matrix[Pi+1][Pj-1] ==2 || matrix[Pi+1][Pj-1] ==9){
+            counter += 1;
+        }
+        if(matrix[Pi+1][Pj+1] ==1 || matrix[Pi+1][Pj+1] ==2 || matrix[Pi+1][Pj+1] ==9){
+            counter += 1;
+        }
+        return counter;
+
+}
+int occupiedPositions(int matrix[][10],int Pi,int Pj)
+{
+
+ int counter = 0;
+
+        if(matrix[Pi-1][Pj-1] ==1 || matrix[Pi-1][Pj-1] ==2 )
+            {
+            counter += 1;
+        }
+        if(matrix[Pi-1][Pj+1] ==1 || matrix[Pi-1][Pj+1] ==2 )
+        {
+            counter += 1;
+        }
+        if(matrix[Pi+1][Pj-1] ==1 || matrix[Pi+1][Pj-1] ==2 )
+        {
+            counter += 1;
+        }
+        if(matrix[Pi+1][Pj+1] ==1 || matrix[Pi+1][Pj+1] ==2 )
+        {
+            counter += 1;
+        }
+        return counter;
+
+}
+bool isBlocked(int Pi, int Pj)
+{
+    initAuxMatrix(matSuport);
+    if(potentialPositions(matSuport,Pi,Pj) == occupiedPositions(M,Pi,Pj)){
+        return true;
+    }
+    return false;
+}
+int verificare_poz(int Pi, int Pj, int Pci, int Pcj)
+{
+
+    if(isBlocked(Pi,Pj)==true)
+        return 0;
+    if(M[Pi][Pj]!=jucator)
+        return -1;
+    if(Pci!=Pi+1 && Pci!=Pi-1)
+        return -2;
+    if(Pcj!=Pj+1 && Pcj!=Pj-1)
+        return -2;
+    //if((Pci!=Pi+1 && Pcj!=Pj+1) && (Pci!=Pi-1 && Pcj!=Pj+1)&& (Pci!=Pi+1 && Pcj!=Pj-1) && (Pci!=Pi-1 && Pcj!=Pj-1))
+       // return -2;
+
+    if (M[Pci][Pcj]!=0)
+        return -3;
+
+    return 1;
+
+}
+void stergere_piese_blocate(int player)
+{
+        for(int i=1;i<=8;i++)
+            for(int j=1;j<=8;j++)
+                if(M[i][j]==player)
+                    if(isBlocked(i,j))
+                        {deseneazaPiesa(i,j,FUNDAL),delay(500),M[i][j]=0;
+                        if(player==1)
+                            scoreCount[2]++;
+                        if(player==2)
+                            scoreCount[1]++;}
+
+
+}
+
+void afisare_scor()
+{   setcolor(RED),itoa(scoreCount[1],sirScor1,10),outtextxy(75,425,sirScor1);
+    setcolor(BLACK),itoa(scoreCount[2],sirScor2,10),outtextxy(75,125,sirScor2);
+}
+void alege_sa_stergi()
+{    int nr_blocate=0,nr_eliminari,ci,cj,c;
+     for(int i=1;i<=8;i++)
+            for(int j=1;j<=8;j++)
+                if(M[i][j]==jucator)
+                    if(isBlocked(i,j))
+                        nr_blocate++,incercuirePiesa(i,j,culoare[jucator]),delay(500);
+
+     if(nr_blocate!=0)
+        {stergere_piese_blocate(jucator);
+              // cout<<player[Copie_jucator]<<": Cate piese vreti sa eliminati? : "; cin>>nr_eliminari; cout<<endl;
+            //if(nr_eliminari!=0)
+               // if(nr_eliminari==nr_blocate)
+                   // stergere_piese_blocate(jucator);
+
+                //else
+                    {   //cout<<player[Copie_jucator]<<": Selectati piesele pe care doriti sa le scoateti: "<<endl;
+                       // for(int i=1;i<=nr_blocate;i++)
+                            { //select_position(ci,cj);
+                             // deseneazaPiesa(ci,cj,FUNDAL),M[ci][cj]=0;
+                               // if(jucator==1)
+                                    //scoreCount[2]++;
+                             //   if(jucator==2)
+                                    //scoreCount[1]++;
+
+                            }
+                    }
+
+        }
+}
+bool end_game()
+{
+    pieseCount[1]=8-scoreCount[2];
+    pieseCount[2]=8-scoreCount[1];
+    if((pieseCount[1]==2 && pieseCount[2]==1) || (pieseCount[1]==1 && pieseCount[2]==2))
+        return true;
+    if((pieseCount[1]==3 && pieseCount[2]==1) || (pieseCount[1]==1 && pieseCount[2]==3))
+        return true;
+    if(pieseCount[1]==0 || pieseCount[2]==0)
+        return true;
+    return false;
+
+}
+
+void get_random_positions()
+{   int rnd=0,ok=0;
+    srand(time(NULL));
+
+    while(ok==0)
+    {   Pi=rand()%8+1;
+        Pj=rand()%8+1;
+        if((isBlocked(Pi,Pj)==false)&& M[Pi][Pj]==2)
+            ok=1;
+    }
+
+   /* rnd=rand()%4;
+    if(rnd==0)
+        Pci=Pi-1,Pcj=Pj-1;
+    else if(rnd==1)
+        Pci=Pi-1,Pcj=Pj+1;
+    else if(rnd==2)
+        Pci=Pi+1,Pcj=Pj-1;
+    else
+        Pci=Pi+1,Pcj=Pj+1;
+*/
+
+    while(verificare_poz(Pi,Pj,Pci,Pcj)!=1)
+    {
+        rnd=rand()%4;
+
+        if(rnd==0)
+            Pci=Pi-1,Pcj=Pj-1;
+        else if(rnd==1)
+            Pci=Pi-1,Pcj=Pj+1;
+        else if(rnd==2)
+            Pci=Pi+1,Pcj=Pj-1;
+        else
+            Pci=Pi+1,Pcj=Pj+1;
+
+    }
+
+}
+
+void pozitii(int libere,int i,int j)//pune in vectorul v indicii pozitiilor libere pe care se poate muta elementul de pe pozitia i si j
+{int nr=1;
+     if(M[i-1][j-1] == 0){
+        v[nr].ii=i-1;
+        v[nr].jj=j-1;
+        nr++;
+    }
+    if(M[i-1][j+1] == 0){
+        v[nr].ii=i-1;
+        v[nr].jj=j+1;
+        nr++;
+    }
+    if(M[i+1][j-1] == 0){
+        v[nr].ii=i+1;
+        v[nr].jj=j-1;
+        nr++;
+    }
+    if(M[i+1][j+1] == 0){
+        v[nr].ii=i+1;
+        v[nr].jj=j+1;
+        nr++;
+    }
+
+
+}
+void atribuire_pozitii(int &ok,int pi,int pj)
+{
+     if(M[pi-1][pj-1] == 2 && ok==0)
+        ok=1,Pi=pi-1,Pj=pj-1,Pci=pi,Pcj=pj;
+     if(M[pi-1][pj+1] == 2 && ok==0)
+        ok=1,Pi=pi-1,Pj=pj+1,Pci=pi,Pcj=pj;
+     if(M[pi+1][pj-1] == 2 && ok==0)
+        ok=1,Pi=pi+1,Pj=pj-1,Pci=pi,Pcj=pj;
+     if(M[pi+1][pj+1] == 2 && ok==0)
+        ok=1,Pi=pi+1,Pj=pj+1,Pci=pi,Pcj=pj;
+}
+void resetare_v()
+{
+    for(int i=0;i<=4;i++)
+        {v[i].ii=0;
+        v[i].jj=0;
+        }
+
+}
+void mutare_inteligenta()
+{  int ok=0;
+int pi=0;
+int pj=0;
+
+        for(int i=1;i<=8 && ok==0 ;i++)
+            for(int j=1;j<=8 && ok==0 ;j++)
+                    if(M[i][j]==1 && occupiedPositions2(M,i,j)==3 && isBlocked(i,j)==false)//daca gasim o piesa rosie care are doar o pozitie libera
+                    {
+                         pozitii(1,i,j);
+                         pi=v[1].ii;
+                         pj=v[1].jj;
+                         atribuire_pozitii(ok,pi,pj);
+                         resetare_v();
+                    }
+
+
+         for(int i=1;i<=8 && ok==0 ;i++)
+            for(int j=1;j<=8 && ok==0 ;j++)
+                if(M[i][j]==1 && occupiedPositions2(M,i,j)==2 && ok==0 && isBlocked(i,j)==false)
+                    {
+                        pozitii(2,i,j);
+                        for(int k=1;k<=2 && ok==0 ;k++)
+                        {
+                            pi=v[k].ii;
+                            pj=v[k].jj;
+                            atribuire_pozitii(ok,pi,pj);
+                        }
+                       resetare_v();
+                    }
+
+         for(int i=1;i<=8 && ok==0 ;i++)
+            for(int j=1;j<=8 && ok==0 ;j++)
+                if(M[i][j]==1 && occupiedPositions2(M,i,j)==1 && ok==0 && isBlocked(i,j)==false)
+                    {
+                        pozitii(3,i,j);
+                        for(int k=1;k<=3 && ok==0 ;k++)
+                        {
+                            pi=v[k].ii;
+                            pj=v[k].jj;
+                            atribuire_pozitii(ok,pi,pj);
+                        }
+                       resetare_v();
+                    }
+
+        for(int i=1;i<=8 && ok==0 ;i++)
+            for(int j=1;j<=8 && ok==0 ;j++)
+                if(M[i][j]==1 && occupiedPositions2(M,i,j)==0 && ok==0 && isBlocked(i,j)==false)
+                    {
+                        pozitii(4,i,j);
+                        for(int k=1;k<=4 && ok==0 ;k++)
+                        {
+                            pi=v[k].ii;
+                            pj=v[k].jj;
+                            atribuire_pozitii(ok,pi,pj);
+                        }
+                      resetare_v();
+                    }
+
+
+        if(ok==0)
+            get_random_positions();
+}
+void player_vs_player()
+{       initwindow(800,600);
+        desen();
+        int x,y;
+        initializare_matr(M);
+        strcpy(player[1],"ROSU");
+        strcpy(player[2],"NEGRU");
+        int i=1;
+        jucator=1;
+        int cordX; int cordY;
+       while(i<=LIMITARE_miscari && end_game()==false)
+        {
+            afisare_matr(M);
+            afisare_scor();
+            select_position(Pi,Pj,cordX,cordY);
+            select_position(Pci,Pcj,cordX,cordY);
+            while(verificare_poz(Pi,Pj,Pci,Pcj)!=1)
+                {   cout<<player[jucator]<<": Eroare "<<endl;
+                    cout<<player[jucator]<<": Selectati pozitia piesei pe care vreti sa o mutati: "<<endl;; select_position(Pi,Pj,cordX,cordY);
+                    cout<<player[jucator]<<": Selectati pozitia la care vreti sa mutati piesa: "<<endl; select_position(Pci,Pcj,cordX,cordY);
+                    cout<<endl;
+
+                }
+            deseneazaPiesa(Pi,Pj,FUNDAL);
+            deseneazaPiesa(Pci,Pcj, culoare[jucator]);
+            Copie_jucator=jucator;
+            build_matr(jucator,Pi,Pj,Pci,Pcj);
+            if(movesCount[jucator]>=MIN_moves)
+                alege_sa_stergi();
+         i++;
+        }
+    }
+
+void player_vs_computer_advanced()
+{
+        int x,y;
+        int goBack = 0;
+        initwindow(800,600);
+        desen();
+        initializare_matr(M);
+        strcpy(player[1],"ROSU");
+        strcpy(player[2],"NEGRU");
+        int i=1;
+        jucator=1;
+        int cordX; int cordY;
+    while(i<=LIMITARE_miscari && end_game()==false)
+   {
+        afisare_matr(M);
+        afisare_scor();
+
+        if(jucator==1)
+        {
+            select_position(Pi,Pj,cordX,cordY);
+            select_position(Pci,Pcj,cordX,cordY);
+
+            while(verificare_poz(Pi,Pj,Pci,Pcj)!=1)
+            {   cout<<player[jucator]<<": Eroare "<<endl;
+                cout<<player[jucator]<<": Selectati pozitia piesei pe care vreti sa o mutati: "<<endl;; select_position(Pi,Pj,cordX,cordY);
+                cout<<player[jucator]<<": Selectati pozitia la care vreti sa mutati piesa: "<<endl; select_position(Pci,Pcj,cordX,cordY);
+                cout<<endl;
+            }
+        }
+
+        else
+            delay(500),mutare_inteligenta();
+
+        deseneazaPiesa(Pi,Pj,FUNDAL);
+        deseneazaPiesa(Pci,Pcj, culoare[jucator]);
+        Copie_jucator=jucator;
+        build_matr(jucator,Pi,Pj,Pci,Pcj);
+        if(movesCount[jucator]>=MIN_moves)
+            alege_sa_stergi();
+
+     i++;
+
+    }
+}
+void player_vs_computer(int &aux)
+{
+        int x,y;
+        int goBack = 0;
+        initwindow(800,600);
+        desen();
+        initializare_matr(M);
+        strcpy(player[1],"ROSU");
+        strcpy(player[2],"NEGRU");
+        int i = 1;
+        jucator = 1;
+        int cordX; int cordY;
+        while(i<=LIMITARE_miscari && end_game()==false)
+        {
+            afisare_matr(M);
+            afisare_scor();
+
+                if(jucator==1)
+                {
+                select_position(Pi,Pj,cordX,cordY);
+                if(cordX >= 645 && cordX <= 750 && cordY >= 440 && cordY <= 475){
+                    goBack = 1;
+                    closegraph();
+                    for(int i = 0; i < 3 ; i++){
+                        scoreCount[i] = 0;
+                        movesCount[i] = 0;
+                    }
+                    initwindow(900,600);
+                    desenMenu();
+                    while (!ismouseclick(WM_LBUTTONDOWN))
+                delay(500);
+                getmouseclick(WM_LBUTTONDOWN, x, y);
+
+                    if(x >= 100 && x <= 800 && y >= 75 && y <= 175)
+                        closegraph(),player_vs_player();
+                    if(x >= 100 && x <= 800 && y >= 225 && y <= 325)
+                        closegraph(),player_vs_computer(goBack);
+                    if(x >= 100 && x <= 800 && y >= 375 && y <= 475)
+                        closegraph(),player_vs_computer_advanced();
+                    }
+                        select_position(Pci,Pcj,cordX,cordY);
+                        //cout<<cordX<<" "<<cordY;
+                            while(verificare_poz(Pi,Pj,Pci,Pcj)!=1)
+                            {   cout<<player[jucator]<<": Eroare "<<endl;
+                                cout<<player[jucator]<<": Selectati pozitia piesei pe care vreti sa o mutati: "<<endl;; select_position(Pi,Pj,cordX,cordY);
+                                cout<<player[jucator]<<": Selectati pozitia la care vreti sa mutati piesa: "<<endl; select_position(Pci,Pcj,cordX,cordY);
+                                cout<<endl;
+                            }
+                }
+            else
+                    delay(500),get_random_positions();
+
+                    deseneazaPiesa(Pi,Pj,FUNDAL);
+                    deseneazaPiesa(Pci,Pcj, culoare[jucator]);
+                    Copie_jucator=jucator;
+                    build_matr(jucator,Pi,Pj,Pci,Pcj);
+                    if(movesCount[jucator]>=MIN_moves)
+                    alege_sa_stergi();
+                      i++;
+                }
+}
+
+void meniu()
+{
+    initwindow(900,600);
+    desenMenu();
+    int x,y;
+    int goBack = 0;
+    while (!ismouseclick(WM_LBUTTONDOWN))
+                delay(500);
+                getmouseclick(WM_LBUTTONDOWN, x, y);
+
+    if(x >= 100 && x <= 800 && y >= 75 && y <= 175)
+        closegraph(),player_vs_player();
+    if(x >= 100 && x <= 800 && y >= 225 && y <= 325)
+        closegraph(),player_vs_computer(goBack);
+    if(x >= 100 && x <= 800 && y >= 375 && y <= 475)
+        closegraph(),player_vs_computer_advanced();
+
+}
+
+int main()
+{
+    meniu();
+}
